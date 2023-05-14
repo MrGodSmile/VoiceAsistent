@@ -15,14 +15,11 @@ from psutil import virtual_memory as memory
 import nltk
 import json
 import wikipedia as wiki
-import re
 import requests
 from bs4 import BeautifulSoup
-from forex_python.converter import CurrencyRates
 import psutil
 import winsound
 import datefinder
-import pyshorteners
 from pywhatkit import playonyt
 from PyQt5 import QtWidgets, QtCore
 import interface
@@ -32,6 +29,26 @@ import re
 
 with open('BASE_INTENTS.json', 'r') as jsn:
     BASE_INTENTS = json.load(jsn)
+
+
+class Currency():
+    DOLLAR_BUN = 'https://www.google.by/search?q=курс+доллара+&sxsrf=APwXEdfluDW-LRIG3J2YfnMV_D7XsxuX9A%3A1684086414892&source=hp&ei=jh5hZM-eM8aM9u8P9eyzyAk&iflsig=AOEireoAAAAAZGEsnhZVb1-dJhVLyB300sQf9lSQkzzM&ved=0ahUKEwjPnZzkrvX-AhVGhv0HHXX2DJkQ4dUDCAk&uact=5&oq=курс+доллара+&gs_lcp=Cgdnd3Mtd2l6EAMyCAgAEIAEELEDMggIABCABBCxAzILCAAQgAQQsQMQgwEyCwgAEIAEELEDEIMBMgsIABCABBCxAxCDATILCAAQgAQQsQMQgwEyCAgAEIAEELEDMgUIABCABDILCAAQgAQQsQMQgwEyBQgAEIAEOgcIIxDqAhAnOggIABCPARDqAjoICC4QjwEQ6gI6CwgAEIoFELEDEIMBOg4ILhCKBRCxAxCDARDUAjoOCAAQgAQQsQMQgwEQyQM6DggAEIAEELEDEIMBEJIDUMcJWJYyYOQ9aAJwAHgAgAGsAYgBzAqSAQQxMi4ymAEAoAEBsAEK&sclient=gws-wiz'
+    RUBLI_BUN= 'https://www.google.by/search?q=курс+к+рублю&sxsrf=APwXEdfSRn-Ru5TcGr4jcflN2FThlprndA%3A1684104904393&source=hp&ei=yGZhZJXvFISkjgb_y5DADg&iflsig=AOEireoAAAAAZGF02H8MD0xCLNoV-uedt4ccxDIozazv&ved=0ahUKEwiV89nU8_X-AhUEksMKHf8lBOgQ4dUDCAk&uact=5&oq=курс+к+рублю&gs_lcp=Cgdnd3Mtd2l6EAMyBQgAEIAEMgUIABCABDIFCAAQgAQyBQgAEIAEMgUIABCABDIFCAAQgAQyBQgAEIAEMgUIABCABDIFCAAQgAQyBQgAEIAEOgcIIxDqAhAnOggIABCPARDqAjoHCCMQigUQJzoLCAAQgAQQsQMQgwE6CwgAEIoFELEDEIMBOg4ILhCABBCxAxCDARDUAjoICAAQgAQQsQM6DggAEIAEELEDEIMBEMkDOg4IABCABBCxAxCDARCSAzoICAAQgAQQyQM6CAgAEIAEEJIDOgcIABCABBAKOgoIABCABBBGEIICUKUTWPsmYNgvaAFwAHgAgAFJiAG3BpIBAjEymAEAoAEBsAEK&sclient=gws-wiz'
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'}
+    full_page_dollar = requests.get(DOLLAR_BUN, headers=headers)
+    soup_dollar = BeautifulSoup(full_page_dollar.content, 'html.parser')
+    full_page_rub = requests.get(DOLLAR_BUN, headers=headers)
+    soup_rub = BeautifulSoup(full_page_dollar.content, 'html.parser')
+
+    @classmethod
+    def currencyusd(cls):
+        convert = Currency.soup_dollar.findAll("span", {"class": "DFlfde SwHCTb", "data-precision": 2})
+        return convert[0].text
+
+    @classmethod
+    def currencyrub(cls):
+        convert = Currency.soup_rub.findAll("span", {"class": "DFlfde SwHCTb", "data-precision": 3})
+        return convert[0].text
 
 
 class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread):
@@ -360,7 +377,20 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
             self.talk(f"Файл {task} уже существует")
 
     def currency(self):
-        self.talk(f'Курс доллара к Евро: {(CurrencyRates().get_rate("USD", "EUR")):2f}')
+        choiceusd = ['к доллару', 'доллару', 'давай доллару']
+        choicerub = ['к рублю', 'рублю', 'к российскому рублю']
+        self.talk("К какой валюте хотите узнать курс? (к доллару или к российскому рублю?)")
+        choice = self.listen()
+
+        c = Currency()
+
+        for i in choicerub:
+            if i == choice:
+                self.talk(fr"1 российский рубль = {c.currencyrub()}")
+
+        for i in choiceusd:
+            if i == choice:
+                self.talk(fr"1 доллар = {c.currencyusd()}")
 
     def joke(self):
         link = requests.get('http://anekdotme.ru/random')
