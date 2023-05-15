@@ -474,24 +474,18 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
                 self.talk("Ну как хотите")
             if user_action == computer_action:
                 self.talk(f"Мы оба выбрали {user_action}, ничья")
-            elif user_action == "камень":
-                if computer_action == "ножницы":
-                    self.talk("Камень бьет ножницы! Вы победили, вам просто повезло")
-                else:
-                    self.talk("Бумага оборачивает камень! Вы проиграли, было легко")
-            elif user_action == "бумага":
-                if computer_action == "камень":
-                    self.talk("Бумага оборачивает камень! Вы победили!")
-                else:
-                    self.talk("Ножницы режут бумагу! Вы проиграли, было легко")
-            elif user_action == "ножницы":
-                if computer_action == "бумага":
-                    self.talk("Ножницы режут бумагу! Вы победили!")
-                else:
-                    self.talk("Камень бьет ножницы! Вы проиграли, было легко")
+            elif (
+                (user_action == "камень" and computer_action == "ножницы") or
+                (user_action == "бумага" and computer_action == "камень") or
+                (user_action == "ножницы" and computer_action == "бумага")
+            ):
+                self.talk("Вы выиграли!")
+            else:
+                self.talk("Вы проиграли!")
             self.talk("Сыграем еще?")
             play_again = self.listen()
             if play_again.lower() != "да":
+                self.talk("зассал")
                 break
 
     def guess_number(self):
