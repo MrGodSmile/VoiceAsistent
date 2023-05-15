@@ -592,20 +592,24 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
         owm = OWM('12ba88a83351c9466ed2a48a06bdd2c8')  # Ваш ключ с сайта open weather map
         mgr = owm.weather_manager()  # Инициализация owm.weather_manager()
         observation = mgr.weather_at_place(country_and_place)
-        # Инициализация mgr.weather_at_place() И передача в качестве параметра туда страну и город
 
-        w = observation.weather
+        if observation is not None:
+            # Инициализация mgr.weather_at_place() И передача в качестве параметра туда страну и город
 
-        status = w.detailed_status  # Узнаём статус погоды в городе и записываем в переменную status
-        w.wind()  # Узнаем скорость ветра
-        humidity = w.humidity  # Узнаём Влажность и записываем её в переменную humidity
-        temp = w.temperature('celsius')[
-            'temp']  # Узнаём температуру в градусах по цельсию и записываем в переменную temp
-        self.talk("В городе " + str(place) + " сейчас " + str(status) +  # Выводим город и статус погоды в нём
-                  "\nТемпература " + str(
-            round(temp)) + " градусов по цельсию" +  # Выводим температуру с округлением в ближайшую сторону
-                  "\nВлажность составляет " + str(humidity) + "%" +  # Выводим влажность в виде строки
-                  "\nСкорость ветра " + str(w.wind()['speed']) + " метров в секунду")  # Узнаём и выводим скорость ветра
+            w = observation.weather
+
+            status = w.detailed_status  # Узнаём статус погоды в городе и записываем в переменную status
+            w.wind()  # Узнаем скорость ветра
+            humidity = w.humidity  # Узнаём Влажность и записываем её в переменную humidity
+            temp = w.temperature('celsius')[
+                'temp']  # Узнаём температуру в градусах по цельсию и записываем в переменную temp
+            self.talk("В городе " + str(place) + " сейчас " + str(status) +  # Выводим город и статус погоды в нём
+                      "\nТемпература " + str(
+                round(temp)) + " градусов по цельсию" +  # Выводим температуру с округлением в ближайшую сторону
+                      "\nВлажность составляет " + str(humidity) + "%" +  # Выводим влажность в виде строки
+                      "\nСкорость ветра " + str(w.wind()['speed']) + " метров в секунду")  # Узнаём и выводим скорость ветра
+        else:
+            self.talk("Такого города или страны нет")
 
     def talk(self, text):
         self.engine = pyttsx3.init(debug=True)
