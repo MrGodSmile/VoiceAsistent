@@ -13,7 +13,7 @@ class Search_program():
             #print ("searching", root)
             if program in files:
                 path = "%s" % join(root, program)
-                Search_program.paths.write(f"{path}\n")
+                Search_program.paths.write(f"\n{path}")
                 break
 
     @classmethod
@@ -27,5 +27,5 @@ class Search_program():
             Search_program.search_program(program)
 
 sp = Search_program()
-program = sp.search_in_txt("steam.exe")
-print(program)
+program = sp.search_in_txt("Discord.exe")
+os.startfile(program)

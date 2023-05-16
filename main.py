@@ -65,7 +65,7 @@ class Search_program():
             #print ("searching", root)
             if program in files:
                 path = "%s" % join(root, program)
-                Search_program.paths.write(f"{path}\n")
+                Search_program.paths.write(f"\n{path}")
                 break
 
     @classmethod
@@ -447,10 +447,9 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
 
         def open_discord():
             sp = Search_program()
-            name = 'steam'
+            name = 'Discord.exe'
             path_to_program = sp.search_in_txt(name)
-            startfile(f'{path_to_program} --processStart Discord.exe')
-            # system(r'C:\Users\mrgod\AppData\Local\Discord\Update.exe --processStart Discord.exe')
+            startfile(path_to_program)
             system("cls")
             self.talk(choice(["Открываю дискорд", "Включаю дискорд", "запускаю дискорд"]))
 
@@ -468,15 +467,10 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
             startfile(path_to_program)
             self.talk(choice(["Открываю стим", "Открываю стим, но много не играйте", "Запуская стим, хорошей игры"]))
 
-        def open_word():
-            startfile(r'C:\Program Files\Microsoft Office\root\Office16\WINWORD.exe')
-            self.talk(choice(["Открываю word", "Открываю ворд"]))
-
         programs = {
             'discord': open_discord, 'дискорд': open_discord,
             'телеграм': open_tg, 'telegram': open_tg,
             'стим': open_steam, 'steam': open_steam,
-            'ворд': open_word, 'word': open_word, 'ворт': open_word,
         }
 
         j = 0
