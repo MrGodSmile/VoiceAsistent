@@ -1,6 +1,4 @@
 import random
-
-import pyowm
 import pyttsx3
 import speech_recognition as sr
 import colorama
@@ -28,6 +26,9 @@ import interface
 import threading
 from pathlib import Path
 import re
+import os
+from os.path import join
+import io
 
 with open('BASE_INTENTS.json', 'r') as jsn:
     BASE_INTENTS = json.load(jsn)
@@ -51,6 +52,31 @@ class Currency():
         RUB_BUN = 'https://www.google.by/search?q=курс+рубля&sxsrf=APwXEdfg26YNygnwvIva9NmX64eKvpkdQQ%3A1684148019264&source=hp&ei=Mw9iZMzvDIaF9u8P5PSPsAE&iflsig=AOEireoAAAAAZGIdQ4ZxDKL8tZppf6yFKlHHnxgzK_Di&oq=курс+&gs_lcp=Cgdnd3Mtd2l6EAEYADIHCCMQigUQJzIHCCMQigUQJzIHCCMQigUQJzILCAAQgAQQsQMQgwEyCwgAEIAEELEDEIMBMgsIABCABBCxAxCDATILCAAQgAQQsQMQgwEyBQgAEIAEMgsIABCABBCxAxCDATIFCAAQgAQ6BwgjEOoCECc6CwgAEIoFELEDEIMBOg4ILhCABBCxAxCDARDUAjoFCC4QgAQ6CAguEIAEENQCOggILhDUAhCABDoKCAAQgAQQyQMQCjoICAAQigUQkgM6CAgAEIAEELEDOg4IABCABBCxAxCDARDJAzoOCAAQgAQQsQMQgwEQkgNQb1iZDGDBFWgBcAB4AYABwgGIAZwFkgEDNi4xmAEAoAEBsAEK&sclient=gws-wiz'
         convert = Currency.currency_soup(RUB_BUN).findAll("span", {"class": "DFlfde SwHCTb", "data-precision": 3})
         return convert[0].text
+
+
+class Search_program():
+    paths = open("Paths.txt", "a+")
+    ready_path = ''
+
+    @classmethod
+    def search_program(cls, program):
+        Assistant.talk("Сейчас попробую найти на вашем компьютере\n Это может занять время\n но в следующий раз будет быстрее")
+        for root, dirs, files in os.walk('C:\\'):
+            #print ("searching", root)
+            if program in files:
+                path = "%s" % join(root, program)
+                Search_program.paths.write(f"{path}\n")
+                break
+
+    @classmethod
+    def search_in_txt(cls, program) -> str:
+        with io.open('Paths.txt', encoding='utf-8') as file:
+            for line in file:
+                if program in line:
+                    print("файл найден")
+                    ready_path = line
+                    return ready_path
+            Search_program.search_program(program)
 
 
 class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread):
@@ -420,16 +446,26 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
         }
 
         def open_discord():
-            system(r'C:\Users\mrgod\AppData\Local\Discord\Update.exe --processStart Discord.exe')
+            sp = Search_program()
+            name = 'steam'
+            path_to_program = sp.search_in_txt(name)
+            startfile(f'{path_to_program} --processStart Discord.exe')
+            # system(r'C:\Users\mrgod\AppData\Local\Discord\Update.exe --processStart Discord.exe')
             system("cls")
             self.talk(choice(["Открываю дискорд", "Включаю дискорд", "запускаю дискорд"]))
 
         def open_tg():
-            startfile(Path.home() / r'AppData\Roaming\Telegram Desktop\Telegram.exe')
+            sp = Search_program()
+            name = 'Telegram.exe'
+            path_to_program = sp.search_in_txt(name)
+            startfile(path_to_program)
             self.talk(choice(["Открываю телеграм", "Включаю телеграм", "запускаю телеграм"]))
 
         def open_steam():
-            startfile(r'C:\Program Files (x86)\Steam\steam.exe')
+            sp = Search_program()
+            name = 'steam'
+            path_to_program = sp.search_in_txt(name)
+            startfile(path_to_program)
             self.talk(choice(["Открываю стим", "Открываю стим, но много не играйте", "Запуская стим, хорошей игры"]))
 
         def open_word():
@@ -487,7 +523,7 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
             self.talk("Сыграем еще?")
             play_again = self.listen()
             if play_again.lower() != "да":
-                self.talk("зассал")
+                self.talk("Ну как хотите")
                 break
 
     def guess_number(self):
@@ -609,7 +645,7 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
                         "\nТемпература " + str(
                 round(temp)) + " градусов по цельсию" +  # Выводим температуру с округлением в ближайшую сторону
                         "\nВлажность составляет " + str(humidity) + "%" +  # Выводим влажность в виде строки
-                        "\nСкорость ветра " + str(w.wind()['speed']) + " метров в секунду")  # Узнаём и выводим скорость ветра
+                        "\nСкорость ветра " + str(w.wind()['speed']) + " метров в секунду") # Узнаём и выводим скорость ветра
         except:
             self.talk("Такого города или страны нету")
 
