@@ -80,8 +80,8 @@ class Search_program():
 
 
 class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread):
-    settings = configparser.ConfigParser()
-    settings.read('settings.ini')
+    #settings = configparser.ConfigParser()
+    #settings.read('settings.ini')
 
     config_dict = get_default_config()  # Инициализация get_default_config()
     config_dict['language'] = 'ru'  # Установка языка
@@ -233,10 +233,18 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
             pass
 
     def music(self):
-        self.talk(choice(['Приятного прослушивания!']))
+        #self.talk(choice(['Приятного прослушивания!']))
+        self.talk("Любую? или какую?")
+        variants = ['давай', 'включи', 'хочу']
         music_list = ['https://www.youtube.com/watch?v=HKcsaovoB6s', 'https://vk.com/audios205597577?section=general',
-                      'https://www.youtube.com/watch?v=GQTFPIoz7Uc&t=4106s', 'https://www.youtube.com/watch?v=8wy4ACtLlfQ&t=2235s']
-        webbrowser.open(choice(music_list))
+                      'https://www.youtube.com/watch?v=GQTFPIoz7Uc&t=4106s',
+                      'https://www.youtube.com/watch?v=8wy4ACtLlfQ&t=2235s']
+        user_choice = self.listen()
+        if user_choice == "любую" or user_choice == "без разницы" or user_choice == "какую хочешь" or user_choice == "давай любую":
+            webbrowser.open(choice(music_list))
+        else:
+            for i in variants:
+                music = task.replace(i, '').replace('  ', ' ')
 
     def translate(self, task):
         self.talk(choice(['Сейчас попытаюсь перевести', 'Сейчас переведу', 'Сейчас попробую перевести']))

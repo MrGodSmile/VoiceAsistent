@@ -4,7 +4,7 @@ from os.path import join
 import io
 
 class Search_program():
-    paths = open("Paths.txt", "a+")
+    paths = open("../Paths.txt", "a+")
     ready_path = ''
 
     @classmethod
@@ -18,7 +18,7 @@ class Search_program():
 
     @classmethod
     def search_in_txt(cls, program):
-        with io.open('Paths.txt', encoding='utf-8') as file:
+        with io.open('../Paths.txt', encoding='utf-8') as file:
             for line in file:
                 if program in line:
                     print("файл найден")
