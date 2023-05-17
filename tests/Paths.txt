@@ -1,4 +1,3 @@
 C:\Program Files (x86)\Steam\steam.exe
-C:\Users\mrgod\AppData\Roaming\Telegram Desktop\Telegram.exe
-C:\Users\mrgod\AppData\Local\Discord\Update.exe
 C:\Users\mrgod\AppData\Local\Discord\app-1.0.9013\Discord.exe
+C:\Users\mrgod\AppData\Roaming\Telegram Desktop\Telegram.exe

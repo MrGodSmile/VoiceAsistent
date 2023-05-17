@@ -4,7 +4,7 @@ from os.path import join
 import io
 
 class Search_program():
-    paths = open("../Paths.txt", "a+")
+    paths = open(r"C:\Users\mrgod\PycharmProjects\VoiceAsistent\tests\Paths.txt", "a+")
     ready_path = ''
 
     @classmethod
@@ -18,8 +18,9 @@ class Search_program():
 
     @classmethod
     def search_in_txt(cls, program):
-        with io.open('../Paths.txt', encoding='utf-8') as file:
-            for line in file:
+        with io.open(r'C:\Users\mrgod\PycharmProjects\VoiceAsistent\tests\Paths.txt', encoding='utf-8') as file:
+            lines = [line.rstrip() for line in file]
+            for line in lines:
                 if program in line:
                     print("файл найден")
                     ready_path = line
@@ -28,4 +29,8 @@ class Search_program():
 
 sp = Search_program()
 program = sp.search_in_txt("Discord.exe")
-os.startfile(program)
+
+try:
+    os.startfile(program)
+except:
+    print("я искал программу и нашел")
