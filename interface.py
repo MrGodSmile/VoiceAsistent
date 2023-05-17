@@ -1,5 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-
+from PyQt5.QtCore import QTimer
+from PyQt5.QtGui import QMovie
+from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
