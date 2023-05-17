@@ -1,4 +1,6 @@
 import random
+
+import openpyxl
 import pyttsx3
 import speech_recognition as sr
 import colorama
@@ -29,59 +31,15 @@ import re
 import os
 from os.path import join
 import io
+from docx import Document
 
 with open('BASE_INTENTS.json', 'r') as jsn:
     BASE_INTENTS = json.load(jsn)
 
 
-class Currency():
-    @classmethod
-    def currency_soup(cls, currency_url):
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'}
-        full_page = requests.get(currency_url, headers=headers)
-        return BeautifulSoup(full_page.content, 'html.parser')
-
-    @classmethod
-    def currency_usd(cls):
-        DOLLAR_BUN = 'https://www.google.by/search?q=курс+доллара+&sxsrf=APwXEdfluDW-LRIG3J2YfnMV_D7XsxuX9A%3A1684086414892&source=hp&ei=jh5hZM-eM8aM9u8P9eyzyAk&iflsig=AOEireoAAAAAZGEsnhZVb1-dJhVLyB300sQf9lSQkzzM&ved=0ahUKEwjPnZzkrvX-AhVGhv0HHXX2DJkQ4dUDCAk&uact=5&oq=курс+доллара+&gs_lcp=Cgdnd3Mtd2l6EAMyCAgAEIAEELEDMggIABCABBCxAzILCAAQgAQQsQMQgwEyCwgAEIAEELEDEIMBMgsIABCABBCxAxCDATILCAAQgAQQsQMQgwEyCAgAEIAEELEDMgUIABCABDILCAAQgAQQsQMQgwEyBQgAEIAEOgcIIxDqAhAnOggIABCPARDqAjoICC4QjwEQ6gI6CwgAEIoFELEDEIMBOg4ILhCKBRCxAxCDARDUAjoOCAAQgAQQsQMQgwEQyQM6DggAEIAEELEDEIMBEJIDUMcJWJYyYOQ9aAJwAHgAgAGsAYgBzAqSAQQxMi4ymAEAoAEBsAEK&sclient=gws-wiz'
-        convert = Currency.currency_soup(DOLLAR_BUN).findAll("span", {"class": "DFlfde SwHCTb", "data-precision": 2})
-        return convert[0].text
-
-    @classmethod
-    def currency_rub(cls):
-        RUB_BUN = 'https://www.google.by/search?q=курс+рубля&sxsrf=APwXEdfg26YNygnwvIva9NmX64eKvpkdQQ%3A1684148019264&source=hp&ei=Mw9iZMzvDIaF9u8P5PSPsAE&iflsig=AOEireoAAAAAZGIdQ4ZxDKL8tZppf6yFKlHHnxgzK_Di&oq=курс+&gs_lcp=Cgdnd3Mtd2l6EAEYADIHCCMQigUQJzIHCCMQigUQJzIHCCMQigUQJzILCAAQgAQQsQMQgwEyCwgAEIAEELEDEIMBMgsIABCABBCxAxCDATILCAAQgAQQsQMQgwEyBQgAEIAEMgsIABCABBCxAxCDATIFCAAQgAQ6BwgjEOoCECc6CwgAEIoFELEDEIMBOg4ILhCABBCxAxCDARDUAjoFCC4QgAQ6CAguEIAEENQCOggILhDUAhCABDoKCAAQgAQQyQMQCjoICAAQigUQkgM6CAgAEIAEELEDOg4IABCABBCxAxCDARDJAzoOCAAQgAQQsQMQgwEQkgNQb1iZDGDBFWgBcAB4AYABwgGIAZwFkgEDNi4xmAEAoAEBsAEK&sclient=gws-wiz'
-        convert = Currency.currency_soup(RUB_BUN).findAll("span", {"class": "DFlfde SwHCTb", "data-precision": 3})
-        return convert[0].text
-
-
-class Search_program():
-    paths = open("Paths.txt", "a+")
-    ready_path = ''
-
-    @classmethod
-    def search_program(cls, program):
-        Assistant.talk("Сейчас попробую найти на вашем компьютере\n Это может занять время\n но в следующий раз будет быстрее")
-        for root, dirs, files in os.walk('C:\\'):
-            #print ("searching", root)
-            if program in files:
-                path = "%s" % join(root, program)
-                Search_program.paths.write(f"\n{path}")
-                break
-
-    @classmethod
-    def search_in_txt(cls, program) -> str:
-        with io.open('Paths.txt', encoding='utf-8') as file:
-            for line in file:
-                if program in line:
-                    print("файл найден")
-                    ready_path = line
-                    return ready_path
-            Search_program.search_program(program)
-
-
 class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread):
-    #settings = configparser.ConfigParser()
-    #settings.read('settings.ini')
+    settings = configparser.ConfigParser()
+    settings.read('settings.ini')
 
     config_dict = get_default_config()  # Инициализация get_default_config()
     config_dict['language'] = 'ru'  # Установка языка
@@ -109,6 +67,8 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
             ('загруженость компьютера', 'загруженость системы', 'загруженость','состояние системы', 'какая загрузка системы', 'какая загрузка'): self.check_memory,
             ('включи музыку', 'вруби музон', 'вруби музыку', 'включи музон', 'врубай музыку'): self.music,
             ('расскажи анекдот', 'анекдот', 'пошути'): self.joke,
+            ('создай папку', 'создать папку'): self.create_folder,
+            ('создай файл', 'создать файл'): self.joke,
             ('какой курс валют', 'скажи курс валют', 'курс валют'): self.currency,
             ('место на диске', 'сколько памяти', 'сколько памяти на диске', 'сколько места'): self.disk_usage,
             ('перезагрузи компьютер', 'перезагрузи комп', 'перезагружай комп', 'перезагрузи'): self.restart_pc,
@@ -233,18 +193,10 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
             pass
 
     def music(self):
-        #self.talk(choice(['Приятного прослушивания!']))
-        self.talk("Любую? или какую?")
-        variants = ['давай', 'включи', 'хочу']
+        self.talk(choice(['Приятного прослушивания!']))
         music_list = ['https://www.youtube.com/watch?v=HKcsaovoB6s', 'https://vk.com/audios205597577?section=general',
-                      'https://www.youtube.com/watch?v=GQTFPIoz7Uc&t=4106s',
-                      'https://www.youtube.com/watch?v=8wy4ACtLlfQ&t=2235s']
-        user_choice = self.listen()
-        if user_choice == "любую" or user_choice == "без разницы" or user_choice == "какую хочешь" or user_choice == "давай любую":
-            webbrowser.open(choice(music_list))
-        else:
-            for i in variants:
-                music = task.replace(i, '').replace('  ', ' ')
+                      'https://www.youtube.com/watch?v=GQTFPIoz7Uc&t=4106s', 'https://www.youtube.com/watch?v=8wy4ACtLlfQ&t=2235s']
+        webbrowser.open(choice(music_list))
 
     def translate(self, task):
         self.talk(choice(['Сейчас попытаюсь перевести', 'Сейчас переведу', 'Сейчас попробую перевести']))
@@ -333,16 +285,10 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
         elif self.text.startswith(('переведи', 'перевести', 'перевод', 'перевести', 'переводить')):
             self.translate(self.text)
 
-        elif self.text.startswith(('создай папку', 'создать папку', 'создай папку с именем', 'создать папку с именем')):
-            self.create_folder(self.text)
-
-        elif self.text.startswith(('создай файл', 'создать файл', 'создай файл с именем', 'создать файл с именем')):
-            self.create_file_on_folder(self.text)
-
         elif self.text.startswith(('поставь будильник', 'поставить будильник', 'запусти будильник', 'запустить будильник', 'будильник')):
             self.alarmclock(self.text)
 
-        for tasks in self.cmds:
+        for tasks in self.cmds:                            #Сверяет сказанное с командами которые в cmds
             for task in tasks:
                 if fuzz.ratio(task, self.text) >= 80:
                     self.cmds[tasks]()
@@ -363,54 +309,93 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
         self.talk(f"Всего {total // (2 ** 30)} гигабайт, используется {used // (2 ** 30)} гигабайт,"
                   f"свободно {free // (2 ** 30)}, Системный диск используется на {percent} процентов")
 
-    def create_folder(self, task):
-        dels = ['создай папку', 'создать папку', 'создай папку с именем', 'создать папку с именем']
+    def create_folder(self):
+        # Получаем путь к рабочему столу
+        desktop_path = (r"C:\Users\mrgod\OneDrive\Рабочий стол")
+        self.talk("Как назовем папку?")
+        name = self.listen()
+        # Создаем полный путь к новой папке на рабочем столе
+        new_folder_path = os.path.join(desktop_path, name)
 
-        for i in dels:
-            task = task.replace(i, '').replace('  ', ' ').strip()
-
-        if not path.exists(task):
-            makedirs(task)
-            self.talk(f"Папка {task} создана")
-            Assistant.last_dir = task
+        # Проверяем, существует ли папка уже
+        if os.path.exists(new_folder_path):
+            self.talk("Папка уже существует")
         else:
-            self.talk(f"Папка {task} уже существует")
+            # Создаем папку на рабочем столе
+            os.mkdir(new_folder_path)
+            self.talk("Папка успешно создана")
 
-    def create_file_on_folder(self, task):
-        dels = ['создай файл', 'создать файл', 'создай файл с именем', 'создать файл с именем']
+    def create_file(self):
+        desktop_path = (r"C:\Users\mrgod\OneDrive\Рабочий стол")
+        self.talk("В какой папке создать файл")
+        folder = self.listen()
 
-        if Assistant.last_dir == '':
-            self.talk("Сначала создайте папку при помощи голосовой команды!")
+        # Создаем полный путь к новой папке на рабочем столе
+        new_folder_path = os.path.join(desktop_path, folder)
 
-        print(Assistant.last_dir)
+        # Проверяем, существует ли папка уже
+        if os.path.exists(new_folder_path):
+            self.talk("Какого типа файл вы хотите создать?\nТекстовый\nЭксель\nВорд")
+            name = self.listen()
+            if name == "текстовый" or name == "текст":
+                self.create_text_file(new_folder_path)
+            elif name == "эксель" or name == "эксэль" or name == "exel":
+                self.create_exel_file(new_folder_path)
+            elif name == "ворд" or name == "ворт" or name == "word" or name == "world":
+                self.create_word_file(new_folder_path)
 
-        for i in dels:
-            task = task.replace(i, '').replace('  ', ' ').strip()
-
-        tasks = task.split()
-
-        for i in tasks:
-            if fuzz.ratio(i, 'проект') > 70:
-                with open(f"{Assistant.last_dir}/main.py", "w") as f:
-                    f.write('''
-    def main():
-        print("Hello, world!")
-    if __name__ == '__main__':
-        main()
-                        ''')
-                    self.talk('Файл main.py создан')
-                    return
-
-        if not path.exists(f"{Assistant.last_dir}/{task}"):
-            if "." not in task:
-                task += ".txt"
-
-            with open(f"{Assistant.last_dir}/{task}", "w") as f:
-                f.write('')
-
-            self.talk(f"Файл {task} создан")
         else:
-            self.talk(f"Файл {task} уже существует")
+            self.talk("Такой папки нету, Вначале создайте ее с помощью голосовой команды")
+
+    def create_text_file(self, file_path):
+        self.talk("как назовем")
+        name = self.listen()
+        new_file_path = os.path.join(file_path, name)
+        new_path = f"{new_file_path}.txt"
+        if os.path.exists(new_path):
+            self.talk("Файл уже существует.")
+        else:
+            with open(new_path, "w") as file:
+                self.talk("хотите туда что-то записать?")
+                choice = self.listen()
+                if choice == "да":
+                    self.talk("что именно")
+                    text = self.listen()
+                    file.write(text)
+                elif choice == "нет":
+                    self.talk("Ну как хотите")
+            self.talk(f"Файл {name} успешно создан")
+
+    def create_exel_file(self, file_path):
+        self.talk("как назовем")
+        name = self.listen()
+        new_file_path = os.path.join(file_path, name)
+        new_path = f"{new_file_path}.xlsx"
+        self.talk(new_path)
+        wb = openpyxl.Workbook()
+        wb.save(new_path)
+        self.talk(f"Файл Excel успешно создан.")
+
+    def create_word_file(self, file_path):
+        self.talk("как назовем")
+        name = self.listen()
+        new_file_path = os.path.join(file_path, name)
+        new_path = f"{new_file_path}.docx"
+        if os.path.exists(new_path):
+            self.talk("Файл уже существует.")
+        else:
+            document = Document()
+            document.save(new_path)
+            self.talk("хотите туда что-то записать?")
+            choice = self.listen()
+            if choice == "да":
+                self.talk("что именно")
+                text = self.listen()
+                document.add_paragraph(text)
+                document.save(new_path)
+            elif choice == "нет":
+                self.talk("Ну как хотите")
+            self.talk(f"Файл {name} успешно создан")
 
     def currency(self):
         c = Currency()
@@ -457,23 +442,33 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
             sp = Search_program()
             name = 'Discord.exe'
             path_to_program = sp.search_in_txt(name)
-            startfile(path_to_program)
-            system("cls")
-            self.talk(choice(["Открываю дискорд", "Включаю дискорд", "запускаю дискорд"]))
+            try:
+                startfile(path_to_program)
+                system("cls")
+                self.talk(choice(["Открываю дискорд", "Включаю дискорд", "запускаю дискорд"]))
+            except:
+                self.talk("Я искал эту программу на компьютере, скажите еще раз мне открыть программу ")
 
         def open_tg():
             sp = Search_program()
             name = 'Telegram.exe'
             path_to_program = sp.search_in_txt(name)
-            startfile(path_to_program)
-            self.talk(choice(["Открываю телеграм", "Включаю телеграм", "запускаю телеграм"]))
+            try:
+                startfile(path_to_program)
+                self.talk(choice(["Открываю телеграм", "Включаю телеграм", "запускаю телеграм"]))
+            except:
+                self.talk("Я искал эту программу на компьютере, скажите еще раз мне открыть программу ")
 
         def open_steam():
             sp = Search_program()
             name = 'steam'
             path_to_program = sp.search_in_txt(name)
-            startfile(path_to_program)
-            self.talk(choice(["Открываю стим", "Открываю стим, но много не играйте", "Запуская стим, хорошей игры"]))
+            try:
+                startfile(path_to_program)
+                self.talk(choice(["Открываю стим", "Открываю стим, но много не играйте", "Запуская стим, хорошей игры"]))
+            except:
+                self.talk("Я искал эту программу на компьютере, скажите еще раз мне открыть программу ")
+
 
         programs = {
             'discord': open_discord, 'дискорд': open_discord,
@@ -647,7 +642,7 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
                         "\nТемпература " + str(
                 round(temp)) + " градусов по цельсию" +  # Выводим температуру с округлением в ближайшую сторону
                         "\nВлажность составляет " + str(humidity) + "%" +  # Выводим влажность в виде строки
-                        "\nСкорость ветра " + str(w.wind()['speed']) + " метров в секунду") # Узнаём и выводим скорость ветра
+                        "\nСкорость ветра " + str(w.wind()['speed']) + " метров в секунду")   # Узнаём и выводим скорость ветра
         except:
             self.talk("Такого города или страны нету")
 
@@ -657,9 +652,9 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
         item = QtWidgets.QListWidgetItem()
         item.setTextAlignment(QtCore.Qt.AlignLeft)
         item.setText('DAVID:' + '\n' + text)
+
         self.listWidget.addItem(item)
         self.listWidget.scrollToBottom()
-
         self.engine.say(text)
         self.engine.runAndWait()
         self.engine.stop()
@@ -732,6 +727,50 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
             except Exception as ex:
                 print(ex)
 
+class Currency():
+    @classmethod
+    def currency_soup(cls, currency_url):
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'}
+        full_page = requests.get(currency_url, headers=headers)
+        return BeautifulSoup(full_page.content, 'html.parser')
+
+    @classmethod
+    def currency_usd(cls):
+        DOLLAR_BUN = 'https://www.google.by/search?q=курс+доллара+&sxsrf=APwXEdfluDW-LRIG3J2YfnMV_D7XsxuX9A%3A1684086414892&source=hp&ei=jh5hZM-eM8aM9u8P9eyzyAk&iflsig=AOEireoAAAAAZGEsnhZVb1-dJhVLyB300sQf9lSQkzzM&ved=0ahUKEwjPnZzkrvX-AhVGhv0HHXX2DJkQ4dUDCAk&uact=5&oq=курс+доллара+&gs_lcp=Cgdnd3Mtd2l6EAMyCAgAEIAEELEDMggIABCABBCxAzILCAAQgAQQsQMQgwEyCwgAEIAEELEDEIMBMgsIABCABBCxAxCDATILCAAQgAQQsQMQgwEyCAgAEIAEELEDMgUIABCABDILCAAQgAQQsQMQgwEyBQgAEIAEOgcIIxDqAhAnOggIABCPARDqAjoICC4QjwEQ6gI6CwgAEIoFELEDEIMBOg4ILhCKBRCxAxCDARDUAjoOCAAQgAQQsQMQgwEQyQM6DggAEIAEELEDEIMBEJIDUMcJWJYyYOQ9aAJwAHgAgAGsAYgBzAqSAQQxMi4ymAEAoAEBsAEK&sclient=gws-wiz'
+        convert = Currency.currency_soup(DOLLAR_BUN).findAll("span", {"class": "DFlfde SwHCTb", "data-precision": 2})
+        return convert[0].text
+
+    @classmethod
+    def currency_rub(cls):
+        RUB_BUN = 'https://www.google.by/search?q=курс+рубля&sxsrf=APwXEdfg26YNygnwvIva9NmX64eKvpkdQQ%3A1684148019264&source=hp&ei=Mw9iZMzvDIaF9u8P5PSPsAE&iflsig=AOEireoAAAAAZGIdQ4ZxDKL8tZppf6yFKlHHnxgzK_Di&oq=курс+&gs_lcp=Cgdnd3Mtd2l6EAEYADIHCCMQigUQJzIHCCMQigUQJzIHCCMQigUQJzILCAAQgAQQsQMQgwEyCwgAEIAEELEDEIMBMgsIABCABBCxAxCDATILCAAQgAQQsQMQgwEyBQgAEIAEMgsIABCABBCxAxCDATIFCAAQgAQ6BwgjEOoCECc6CwgAEIoFELEDEIMBOg4ILhCABBCxAxCDARDUAjoFCC4QgAQ6CAguEIAEENQCOggILhDUAhCABDoKCAAQgAQQyQMQCjoICAAQigUQkgM6CAgAEIAEELEDOg4IABCABBCxAxCDARDJAzoOCAAQgAQQsQMQgwEQkgNQb1iZDGDBFWgBcAB4AYABwgGIAZwFkgEDNi4xmAEAoAEBsAEK&sclient=gws-wiz'
+        convert = Currency.currency_soup(RUB_BUN).findAll("span", {"class": "DFlfde SwHCTb", "data-precision": 3})
+        return convert[0].text
+
+
+class Search_program():
+    paths = open("Paths.txt", "a+")
+    ready_path = ''
+
+    @classmethod
+    def search_program(cls, program):
+        Assistant.talk("Сейчас попробую найти на вашем компьютере\n Это может занять время\n но в следующий раз будет быстрее")
+        for root, dirs, files in os.walk('C:\\'):
+            #print ("searching", root)
+            if program in files:
+                path = "%s" % join(root, program)
+                Search_program.paths.write(f"\n{path}")
+                break
+
+    @classmethod
+    def search_in_txt(cls, program) -> str:
+        with io.open('Paths.txt', encoding='utf-8') as file:
+            lines = [line.rstrip() for line in file]
+            for line in lines:
+                if program in line:
+                    print("файл найден")
+                    ready_path = line
+                    return ready_path
+            Search_program.search_program(program)
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
