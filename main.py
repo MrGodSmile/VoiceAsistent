@@ -68,7 +68,7 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
             ('включи музыку', 'вруби музон', 'вруби музыку', 'включи музон', 'врубай музыку'): self.music,
             ('расскажи анекдот', 'анекдот', 'пошути'): self.joke,
             ('создай папку', 'создать папку'): self.create_folder,
-            ('создай файл', 'создать файл'): self.joke,
+            ('создай файл', 'создать файл'): self.create_file,
             ('какой курс валют', 'скажи курс валют', 'курс валют'): self.currency,
             ('место на диске', 'сколько памяти', 'сколько памяти на диске', 'сколько места'): self.disk_usage,
             ('перезагрузи компьютер', 'перезагрузи комп', 'перезагружай комп', 'перезагрузи'): self.restart_pc,
@@ -335,36 +335,43 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
 
         # Проверяем, существует ли папка уже
         if os.path.exists(new_folder_path):
-            self.talk("Какого типа файл вы хотите создать?\nТекстовый\nЭксель\nВорд")
-            name = self.listen()
-            if name == "текстовый" or name == "текст":
-                self.create_text_file(new_folder_path)
-            elif name == "эксель" or name == "эксэль" or name == "exel":
-                self.create_exel_file(new_folder_path)
-            elif name == "ворд" or name == "ворт" or name == "word" or name == "world":
-                self.create_word_file(new_folder_path)
+            while True:
+                self.talk("Какого типа файл вы хотите создать?\nТекстовый\nЭксель\nВорд")
+                name = self.listen()
+                if name == "текстовый" or name == "текст":
+                    self.create_text_file(new_folder_path)
+                    break
+                elif name == "эксель" or name == "эксэль" or name == "excel":
+                    self.create_exel_file(new_folder_path)
+                    break
+                elif name == "ворд" or name == "ворт" or name == "word" or name == "world":
+                    self.create_word_file(new_folder_path)
+                    break
 
         else:
-            self.talk("Такой папки нету, Вначале создайте ее с помощью голосовой команды")
+            self.talk("Такой папки нету,\n Вначале создайте ее\n с помощью голосовой команды")
 
     def create_text_file(self, file_path):
-        self.talk("как назовем")
-        name = self.listen()
-        new_file_path = os.path.join(file_path, name)
-        new_path = f"{new_file_path}.txt"
-        if os.path.exists(new_path):
-            self.talk("Файл уже существует.")
-        else:
-            with open(new_path, "w") as file:
-                self.talk("хотите туда что-то записать?")
-                choice = self.listen()
-                if choice == "да":
-                    self.talk("что именно")
-                    text = self.listen()
-                    file.write(text)
-                elif choice == "нет":
-                    self.talk("Ну как хотите")
-            self.talk(f"Файл {name} успешно создан")
+        while True:
+            self.talk("как назовем")
+            name = self.listen()
+            new_file_path = os.path.join(file_path, name)
+            new_path = f"{new_file_path}.txt"
+
+            if os.path.exists(new_path):
+                self.talk("Файл уже существует, придумайте новое название")
+            else:
+                with open(new_path, "w") as file:
+                    self.talk("хотите туда что-то записать?")
+                    choice = self.listen()
+                    if choice == "да":
+                        self.talk("что именно")
+                        text = self.listen()
+                        file.write(text)
+                    elif choice == "нет":
+                        self.talk("Ну как хотите")
+                self.talk(f"Файл {name} успешно создан")
+                break
 
     def create_exel_file(self, file_path):
         self.talk("как назовем")
@@ -582,6 +589,7 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
     def quite(self):
         self.talk(choice(['Надеюсь я смог вам чем-то помочь', 'Рад был помочь', 'Пока', 'Я пошел']))
         self.engine.stop()
+        self.working = False
         system('cls')
         sys.exit(0)
 
@@ -748,7 +756,7 @@ class Currency():
 
 
 class Search_program():
-    paths = open("Paths.txt", "a+")
+    paths = open(r"C:\Users\mrgod\PycharmProjects\VoiceAsistent\Paths.txt", "a+")
     ready_path = ''
 
     @classmethod
@@ -763,7 +771,7 @@ class Search_program():
 
     @classmethod
     def search_in_txt(cls, program) -> str:
-        with io.open('Paths.txt', encoding='utf-8') as file:
+        with io.open(r"C:\Users\mrgod\PycharmProjects\VoiceAsistent\Paths.txt", encoding='utf-8') as file:
             lines = [line.rstrip() for line in file]
             for line in lines:
                 if program in line:
