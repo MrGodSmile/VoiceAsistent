@@ -1,5 +1,4 @@
 import random
-
 import openpyxl
 import pyttsx3
 import speech_recognition as sr
@@ -32,6 +31,9 @@ import os
 from os.path import join
 import io
 from docx import Document
+from vosk import Model, KaldiRecognizer
+import pyaudio
+import json
 
 with open('BASE_INTENTS.json', 'r') as jsn:
     BASE_INTENTS = json.load(jsn)
@@ -49,6 +51,13 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+
+        self.model = Model(r"C:\Users\mrgod\PycharmProjects\vosk-model-small-ru-0.22")  # полный путь к модели
+        self.rec = KaldiRecognizer(self.model, 16000)
+        self.p = pyaudio.PyAudio()
+        self.stream = None
+        self.text = ""
+
         self.pushButton.clicked.connect(self.start_thread)
         self.pushButton_2.clicked.connect(self.stop)
         self.working = False
@@ -103,6 +112,20 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
         self.ans = ''
 
         wiki.set_lang('ru')
+
+    def start_stream(self):
+        self.stream = self.p.open(
+            format=pyaudio.paInt16,
+            channels=1,
+            rate=16000,
+            input=True,
+            frames_per_buffer=16000
+        )
+        self.stream.start_stream()
+
+    def stop_stream(self):
+        self.stream.stop_stream()
+        self.stream.close()
 
     def cleaner(self, text):
         self.text = text
@@ -668,26 +691,25 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
         self.engine.stop()
 
     def listen(self):
-        
-        self.text = ''
-
-        with sr.Microphone() as source:
+        self.start_stream()
+        while True:
             print(f"{colorama.Fore.LIGHTGREEN_EX}Я вас слушаю...")
-            self.r.adjust_for_ambient_noise(source)
-            audio = self.r.listen(source)
-            try:
-                self.text = self.r.recognize_google(audio, language="ru-RU").lower()
-            except Exception as e:
-                print(e)
+            data = self.stream.read(8000)
+            if len(data) == 0:
+                break
+            if self.rec.AcceptWaveform(data):
+                result = json.loads(self.rec.Result())
+                self.text = result['text'].lower()
 
-            if self.text != '':
-                item = QtWidgets.QListWidgetItem()
-                item.setTextAlignment(QtCore.Qt.AlignRight)
-                item.setText('Вы:' + '\n' + self.text)
-                self.listWidget.addItem(item)
-                self.listWidget.scrollToBottom()
+                if self.text != '':
+                    item = QtWidgets.QListWidgetItem()
+                    item.setTextAlignment(QtCore.Qt.AlignRight)
+                    item.setText('Вы:' + '\n' + self.text)
+                    self.listWidget.addItem(item)
+                    self.listWidget.scrollToBottom()
 
-            return self.text
+                self.stop_stream()
+                return self.text
 
     def alarmclock(self, text):
         time = datefinder.find_dates(text)
@@ -746,14 +768,15 @@ class Currency():
     def currency_usd(cls):
         DOLLAR_BUN = 'https://www.google.by/search?q=курс+доллара+&sxsrf=APwXEdfluDW-LRIG3J2YfnMV_D7XsxuX9A%3A1684086414892&source=hp&ei=jh5hZM-eM8aM9u8P9eyzyAk&iflsig=AOEireoAAAAAZGEsnhZVb1-dJhVLyB300sQf9lSQkzzM&ved=0ahUKEwjPnZzkrvX-AhVGhv0HHXX2DJkQ4dUDCAk&uact=5&oq=курс+доллара+&gs_lcp=Cgdnd3Mtd2l6EAMyCAgAEIAEELEDMggIABCABBCxAzILCAAQgAQQsQMQgwEyCwgAEIAEELEDEIMBMgsIABCABBCxAxCDATILCAAQgAQQsQMQgwEyCAgAEIAEELEDMgUIABCABDILCAAQgAQQsQMQgwEyBQgAEIAEOgcIIxDqAhAnOggIABCPARDqAjoICC4QjwEQ6gI6CwgAEIoFELEDEIMBOg4ILhCKBRCxAxCDARDUAjoOCAAQgAQQsQMQgwEQyQM6DggAEIAEELEDEIMBEJIDUMcJWJYyYOQ9aAJwAHgAgAGsAYgBzAqSAQQxMi4ymAEAoAEBsAEK&sclient=gws-wiz'
         convert = Currency.currency_soup(DOLLAR_BUN).findAll("span", {"class": "DFlfde SwHCTb", "data-precision": 2})
-        return convert[0].text
+        result = convert[0].text
+        return result
 
     @classmethod
     def currency_rub(cls):
         RUB_BUN = 'https://www.google.by/search?q=курс+рубля&sxsrf=APwXEdfg26YNygnwvIva9NmX64eKvpkdQQ%3A1684148019264&source=hp&ei=Mw9iZMzvDIaF9u8P5PSPsAE&iflsig=AOEireoAAAAAZGIdQ4ZxDKL8tZppf6yFKlHHnxgzK_Di&oq=курс+&gs_lcp=Cgdnd3Mtd2l6EAEYADIHCCMQigUQJzIHCCMQigUQJzIHCCMQigUQJzILCAAQgAQQsQMQgwEyCwgAEIAEELEDEIMBMgsIABCABBCxAxCDATILCAAQgAQQsQMQgwEyBQgAEIAEMgsIABCABBCxAxCDATIFCAAQgAQ6BwgjEOoCECc6CwgAEIoFELEDEIMBOg4ILhCABBCxAxCDARDUAjoFCC4QgAQ6CAguEIAEENQCOggILhDUAhCABDoKCAAQgAQQyQMQCjoICAAQigUQkgM6CAgAEIAEELEDOg4IABCABBCxAxCDARDJAzoOCAAQgAQQsQMQgwEQkgNQb1iZDGDBFWgBcAB4AYABwgGIAZwFkgEDNi4xmAEAoAEBsAEK&sclient=gws-wiz'
         convert = Currency.currency_soup(RUB_BUN).findAll("span", {"class": "DFlfde SwHCTb", "data-precision": 3})
-        return convert[0].text
-
+        result = convert[0].text
+        return result
 
 class Search_program():
     paths = open(r"C:\Users\mrgod\PycharmProjects\VoiceAsistent\Paths.txt", "a+")
