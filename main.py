@@ -14,7 +14,6 @@ import webbrowser
 import configparser
 from psutil import virtual_memory as memory
 import nltk
-import json
 import wikipedia as wiki
 import requests
 from bs4 import BeautifulSoup
@@ -25,7 +24,6 @@ from pywhatkit import playonyt
 from PyQt5 import QtWidgets, QtCore
 import interface
 import threading
-from pathlib import Path
 import re
 import os
 from os.path import join
@@ -52,7 +50,7 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
         super().__init__()
         self.setupUi(self)
 
-        self.model = Model(r"C:\Users\mrgod\PycharmProjects\vosk-model-small-ru-0.22")  # полный путь к модели
+        self.model = Model(r"C:\Users\mrgod\PycharmProjects\VoiceAsistent\vosk-model-small-ru-0.22")  # полный путь к модели
         self.rec = KaldiRecognizer(self.model, 16000)
         self.p = pyaudio.PyAudio()
         self.stream = None
@@ -501,9 +499,9 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
 
 
         programs = {
-            'discord': open_discord, 'дискорд': open_discord,
+            'discord': open_discord, 'дискорд': open_discord, 'дискорт': open_discord, 'дис корд': open_discord, 'дис корт': open_discord, 'дис скорд': open_discord, 'дис скорт': open_discord,
             'телеграм': open_tg, 'telegram': open_tg,
-            'стим': open_steam, 'steam': open_steam,
+            'стим': open_steam, 'steam': open_steam, 'стин': open_steam, 'стеам': open_steam,
         }
 
         j = 0
