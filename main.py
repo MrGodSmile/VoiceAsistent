@@ -32,7 +32,6 @@ from docx import Document
 from vosk import Model, KaldiRecognizer
 import pyaudio
 import json
-from googletrans import Translator
 
 with open('BASE_INTENTS.json', 'r') as jsn:
     BASE_INTENTS = json.load(jsn)
@@ -81,6 +80,7 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
             ('место на диске', 'сколько памяти', 'сколько памяти на диске', 'сколько места'): self.disk_usage,
             ('перезагрузи компьютер', 'перезагрузи комп', 'перезагружай комп', 'перезагрузи'): self.restart_pc,
             ('забавный факт', 'смешной факт', 'факт дня', 'интересный факт'): self.facts,
+            ('подожди', 'помолчи', 'остановись'): self.wait,
             ('сыграем в камень ножницы бумага', 'давай сыграем в камень ножницы бумага', 'камень ножницы бумага','сыграем в цу е фа','сыграем в цу-е-фа'): self.tsu_e_fa,
             ('сыграем в угадай число', 'давай сыграем в угадай число', 'угадай число'): self.guess_number,
         }
@@ -614,6 +614,12 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
         self.working = False
         system('cls')
         sys.exit(0)
+
+    def wait(self):
+        self.talk(choice(['Ожидаю', 'Буду нужен, говорите']))
+        self.engine.stop()
+        self.working = False
+        system('cls')
 
     def restart_pc(self):
         self.talk("Подтвердите действие!")
