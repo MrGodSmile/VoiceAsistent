@@ -71,9 +71,25 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
+        # Создание менеджера компоновки
+        self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
+        self.verticalLayout.setObjectName("verticalLayout")
+
+        # Добавление элементов в менеджер компоновки
+        self.verticalLayout.addWidget(self.label)
+        self.verticalLayout.addWidget(self.listWidget)
+        self.verticalLayout.addWidget(self.pushButton)
+        self.verticalLayout.addWidget(self.pushButton_2)
+
+        # Установка центрального виджета
+        MainWindow.setCentralWidget(self.centralwidget)
+
+        self.retranslateUi(MainWindow)
+        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Voice Assistent"))
-        self.label.setText(_translate("MainWindow", "Assistent - DAVID"))
+        self.label.setText(_translate("MainWindow", "Assistent - DavIA"))
         self.pushButton.setText(_translate("MainWindow", "Начать"))
         self.pushButton_2.setText(_translate("MainWindow", "Выход"))
