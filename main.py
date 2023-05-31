@@ -1,9 +1,8 @@
 import random
 import openpyxl
-import pyttsx3
-import speech_recognition as sr
+import pyttsx3                          #_____________________________________________
 import colorama
-from fuzzywuzzy import fuzz                         #Расстояние Левенштейна для нечеткого сравнения строк
+from fuzzywuzzy import fuzz             #_____________________________________________#Расстояние Левенштейна для нечеткого сравнения строк
 import datetime
 from os import system, path, makedirs, startfile
 import sys
@@ -21,7 +20,7 @@ import psutil
 import winsound
 import datefinder
 from pywhatkit import playonyt
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore     #_____________________________________________
 import interface
 import threading
 import re
@@ -29,8 +28,8 @@ import os
 from os.path import join
 import io
 from docx import Document
-from vosk import Model, KaldiRecognizer
-import pyaudio
+from vosk import Model, KaldiRecognizer #_____________________________________________
+import pyaudio                          #_____________________________________________
 import json
 
 with open('BASE_INTENTS.json', 'r') as jsn:
@@ -59,7 +58,6 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
         self.pushButton.clicked.connect(self.start_thread)
         self.pushButton_2.clicked.connect(self.stop)
         self.working = False
-        self.r = sr.Recognizer()
         self.text = ''
 
         self.cmds = {
@@ -67,10 +65,10 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
             ('привет', 'добрый день', 'здравствуй'): self.hello,
             ('пока', 'вырубись'): self.quite,
             ('выключи компьютер', 'выруби компьютер'): self.shut,
-            ('какая погода', 'погода', 'погода на улице'): self.weather,
-            ('добавить задачу', 'добавить заметку', 'создай заметку', 'создай задачу'): self.task_planner,
+            ('какая погода', 'погода', 'погода на улице', 'прогноз погоды'): self.weather,
+            ('добавь задачу', 'добавить заметку', 'создай заметку', 'создай задачу'): self.task_planner,
             ('список задач', 'список заметок', 'задачи', 'заметки'): self.task_list,
-            ('удалить задачу', 'удали задачу', 'хочу удалить задачу'): self.task_delete,
+            ('удали задачу', 'хочу удалить задачу'): self.task_delete,
             ('загруженость компьютера', 'загруженость системы', 'загруженость','состояние системы', 'какая загрузка системы', 'какая загрузка'): self.check_memory,
             ('включи музыку', 'вруби музон', 'вруби музыку', 'включи музон', 'врубай музыку'): self.music,
             ('расскажи анекдот', 'анекдот', 'пошути'): self.joke,
@@ -85,7 +83,7 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
             ('сыграем в угадай число', 'давай сыграем в угадай число', 'угадай число'): self.guess_number,
         }
 
-        self.ndels = ['давид', 'дэвид', 'не мог бы ты']
+        self.ndels = ['давид', 'дэвид', 'не мог бы ты', 'дэвиа']
 
         self.commands = [
             'текущее время', 'сейчас времени', 'который час',
@@ -95,7 +93,7 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
             'выключи компьютер', 'выруби компьютер',
             'какая погода', 'погода', 'погода на улице', 'какая погода на улице',
             'добавить задачу', 'добавить заметку', 'создай заметку', 'создай задачу','список задач',
-            'список заметок', 'задачи','заметки',
+            'список заметок', 'задачи', 'заметки',
             'загруженость компьютера', 'загруженость системы', 'какая загрузка',
             'включи музыку', 'вруби музон', 'вруби музыку', 'включи музон', 'врубай музыку',
             'расскажи анекдот', 'анекдот', 'пошути'
@@ -103,7 +101,7 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
             'перезагрузи компьютер', 'перезагрузи комп', 'перезагружай комп', 'перезагрузи',
             'забавный факт', 'смешной факт', 'факт дня', 'интересный факт','удалить задачу', 'удали задачу',
             'хочу удалить задачу' 'создай файл', 'создать файл', 'сыграем в камень ножницы бумага', 'давай сыграем в камень ножницы бумага',
-            'камень ножницы бумага', 'сыграем в угадай число', 'давай сыграем в угадай число', 'угадай число'
+            'камень ножницы бумага', 'сыграем в угадай число', 'давай сыграем в угадай число', 'угадай число', 'подожди', 'помолчи', 'остановись',
         ]
 
         self.num_task = 0
@@ -171,7 +169,7 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
         intent = self.get_intent(text) #Пытаемся понять намерения и сравнить по Левенштейну
 
         if intent is None:
-            return self.talk(" ") #Тест если нету такого интента
+            return self.talk("Я не понял") #Тест если нету такого интента
 
         self.talk(choice(BASE_INTENTS['intents'][intent]['responses']))
 
@@ -190,6 +188,8 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
         self.talk(f"Список задач:\n{tasks}")
 
     def task_delete(self):
+        self.task_list()
+
         self.talk("Какую задачу удалить?")
         task = self.listen()
 
@@ -200,7 +200,7 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
         with open(r'C:\Users\mrgod\PycharmProjects\VoiceAsistent\TODO_LIST.txt', 'w') as file:  #Если строка не найдена записываем строку в файл
             for line in lines:
                 result = pattern.search(line)
-                if result is None:
+                if result is None :
                     file.write(line)
                     self.talk(f'Задача {task} удалена')
 
@@ -328,8 +328,8 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
 
     def disk_usage(self):
         total, used, free, percent = psutil.disk_usage('C:/')
-        self.talk(f"Всего {total // (2 ** 30)} гигабайт, используется {used // (2 ** 30)} гигабайт,"
-                  f"свободно {free // (2 ** 30)}, Системный диск используется на {percent} процентов")
+        self.talk(f"Всего {total // (2 ** 30)} гигабайт,\n используется {used // (2 ** 30)} гигабайт,\n"
+                  f"свободно {free // (2 ** 30)},\n Системный диск используется на {percent} процентов")
 
     def create_folder(self):
         # Получаем путь к рабочему столу
@@ -431,7 +431,7 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
         choice_usd = ['к доллару', 'доллару', 'давай доллару']
         choice_rub = ['к рублю', 'рублю', 'к российскому рублю', 'российскому рублю']
         choice_exit = ['не хочу', 'больше не хочу узнавать', 'хватит', 'не надо', 'я передумал']
-        self.talk("К какой валюте хотите узнать курс? (к доллару или к российскому рублю?)")
+        self.talk("К какой валюте хотите узнать курс?\n (к доллару или к российскому рублю?)")
         choice = self.listen()
         for i in choice_exit:
             if i == choice:
@@ -444,7 +444,7 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
                 self.talk(fr"1 доллар - {c.currency_usd()} беларусских рублей")
 
     def joke(self):
-        link = requests.get('http://anekdotme.ru/random')
+        link = requests.get('http://anekdotme.ru/lenta')
         parse = BeautifulSoup(link.text, "html.parser")
         select = parse.select('.anekdot_text')
         get = (select[0].getText().strip())
@@ -453,8 +453,9 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
         self.talk(joke)
 
     def time(self):
-        now = datetime.datetime.now()
-        self.talk(f"Сейчас {now.hour} : {now.minute}")
+        current_time = datetime.datetime.now()
+        formatted_time = current_time.strftime("%H:%M")
+        self.talk(f"Сейчас {formatted_time}")
 
     def opener(self, task):
         links = {
@@ -553,8 +554,21 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
                 break
 
     def guess_number(self):
-        NumberToGuess = str(random.randint(1, 10))
-        self.talk("Ну давайте сыграем, только давайте до 10-ти, а то мы так долго будем")
+        number_words = {
+            "ноль": 0,
+            "один": 1,
+            "два": 2,
+            "три": 3,
+            "четыре": 4,
+            "пять": 5,
+            "шесть": 6,
+            "семь": 7,
+            "восемь": 8,
+            "девять": 9,
+            "десять": 10,
+        }
+        NumberToGuess = random.randint(1, 10)
+        self.talk("Ну давайте сыграем, только давайте до 10-ти\nа то мы так долго будем")
         self.talk("кто загадывает?")
         num = []
         who_play = self.listen()
@@ -566,13 +580,14 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
             self.talk("Ну загадывай")
             while True:
                 userGuess = self.listen()
-                if int(userGuess) > 10 or int(userGuess) < 1:
+                int_num = number_words.get(userGuess)
+                if int_num > 10 or int_num < 1:
                     self.talk("Я же сказал от 1 до 10")
                 else:
                     while True:
-                        NumberToGuessBot = str(random.randint(1, 10))
+                        NumberToGuessBot = random.randint(1, 10)
                         while num.__contains__(NumberToGuessBot):
-                            NumberToGuessBot = str(random.randint(1, 10))
+                            NumberToGuessBot = random.randint(1, 10)
                         num.append(NumberToGuessBot)
 
                         self.talk(f"Я думаю {NumberToGuessBot}")
@@ -581,13 +596,13 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
                             self.talk("Ну как хотите")
                             break
                         if answer == "да":
-                            if userGuess != NumberToGuessBot:
+                            if int_num != NumberToGuessBot:
                                 self.talk(f"Дак ты не это загадывал, я же все знаю, твое число было {userGuess}")
                                 break
                             self.talk("Было легко")
                             break
                         if answer == "нет":
-                            if NumberToGuessBot == userGuess:
+                            if NumberToGuessBot == int_num:
                                 self.talk("Не ври, ты это число загадал")
                                 break
                     break
@@ -595,18 +610,23 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
         if who_play == "ты" or who_play == "вы":
             self.talk("Я загадал, угадывай")
             userChoice = self.listen()
+            int_num = number_words.get(userChoice)
 
-            while userChoice != NumberToGuess:
+            while True:
                 if userChoice == "хватит" or userChoice == "не хочу":
                     self.talk("Ну как хотите")
                     break
-                if userChoice > NumberToGuess:
-                    self.talk("Число должно быть меньше!")
-                elif userChoice < NumberToGuess:
-                    print("Число должно быть больше!")
-                else:
-                    print(f"Вы угадали, это число {NumberToGuess}")
-                break
+                if int_num > NumberToGuess:
+                    self.talk("Число должно быть меньше!\nПопробуйте снова")
+                    userChoice = self.listen()
+                    int_num = number_words.get(userChoice)
+                if int_num < NumberToGuess:
+                    self.talk("Число должно быть больше!\nПопробуйте снова")
+                    userChoice = self.listen()
+                    int_num = number_words.get(userChoice)
+                if int_num == NumberToGuess:
+                    self.talk(f"Вы угадали, это число {NumberToGuess}")
+                    break
 
     def quite(self):
         self.talk(choice(['Надеюсь я смог вам чем-то помочь', 'Рад был помочь', 'Пока', 'Я пошел']))
@@ -650,7 +670,7 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
             self.talk("Действие не подтверждено")
 
     def hello(self):
-        self.talk(choice(['Привет, чем могу помочь?', 'Здраствуйте', 'Приветствую']))
+        self.talk(choice(['Привет, чем могу помочь?', 'Здраствуйте', 'Приветствую', 'О ты снова вернулся', 'Опять нужна моя помощь?']))
 
     def weather(self):
         self.talk("В каком городе хотите узнать погоду?")
@@ -687,12 +707,13 @@ class Assistant(QtWidgets.QMainWindow, interface.Ui_MainWindow, threading.Thread
         print(text)
         item = QtWidgets.QListWidgetItem()
         item.setTextAlignment(QtCore.Qt.AlignLeft)
-        item.setText('DAVID:' + '\n' + text)
+        item.setText('DavIA:' + '\n' + text)
 
         self.listWidget.addItem(item)
         self.listWidget.scrollToBottom()
+        self.engine.setProperty('rate', 270)
         self.engine.say(text)
-        self.engine.runAndWait()
+        self.engine.runAndWait()    #Запуск воспроизведение речи
         self.engine.stop()
 
     def listen(self):
